@@ -56,7 +56,7 @@ class ResBlock(nn.Module):
         self.act = nn.SiLU()
 
         if in_channels % num_groups != 0 or out_channels % num_groups != 0:
-            raise ValueError("in_channels/out_channels must be divisible by group_norm [Res_Block]")
+            raise ValueError("in_channels/out_channels must be divisible by num_groups [Res_Block]")
         
         # To map sinusoidal time embedding to out_channels
         self.lin = nn.Linear(time_emb_dim, out_channels)
@@ -100,7 +100,7 @@ class AttentionBlock(nn.Module):
         self.qkv_proj = nn.Linear(input_dim, qkv_dim * 3) # Converting to Q, K, V in single linear layer for efficiency
         self.final_proj = nn.Linear(qkv_dim, input_dim)
         if input_dim % num_groups != 0:
-            raise ValueError("input_dim must be divisible by group_norm [Attention_Block]")
+            raise ValueError("input_dim must be divisible by num_groups [Attention_Block]")
         self.norm = nn.GroupNorm(num_groups, input_dim)
 
     # def scaled_dot_product(self, q, k, v):

@@ -15,30 +15,21 @@ import matplotlib.pyplot as plt
 
 load_dotenv()
 
-# Loading our dataset
-transform = v2.Compose([
-    v2.Resize((512, 512)),
-    v2.RandomHorizontalFlip(),
-    v2.Lambda(lambda x: x*2 - 1)
-])
-# dataset = FashionMNIST(root="./data", train=True, transform=transform, download=True)
-dataset = TransistorDataset(img_dir="./data/transistor/train/good/", transform=transform)
-
 # Hyperparameters
-BATCH_SIZE = 2
-LR = 2e-4   # paper default
-EPOCHS = 1000
+BATCH_SIZE = 16
+LR = 1e-4   # paper default is 2e-4
+EPOCHS = 6500
 NUM_TIMESTEPS = 1000
 BETA_START = 1e-4
 BETA_END = 0.02
-IMG_SIZE = 512
+IMG_SIZE = 256
 IN_CHANNELS = 3
 BASE_CHANNELS = 64  # paper used 128
 DEPTH = 4
 SINUSOIDAL_TIME_EMB_DIM = 128
 EMB_DIM = 256
-N_HEADS = 8
-NUM_GROUPS = 8
+N_HEADS = 4
+NUM_GROUPS = 32
 DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
 config = {
@@ -61,6 +52,15 @@ config = {
 
 wandb.login(key=os.getenv("WANDB_API_KEY"))
 wandb.init(project='DDPM-MVTecAD', config=config)
+
+# Loading our dataset
+transform = v2.Compose([
+    v2.Resize((IMG_SIZE, IMG_SIZE)),
+    v2.RandomHorizontalFlip(),
+    v2.Lambda(lambda x: x*2 - 1)
+])
+
+dataset = TransistorDataset(img_dir="./data/transistor/train/good/", transform=transform)
 
 # Objects
 lns = LinearNoiseScheduler(NUM_TIMESTEPS, BETA_START, BETA_END, DEVICE)
@@ -113,7 +113,7 @@ for epoch in range(EPOCHS):
         train_loss += loss.item() * x_0.size(0)
         total_imgs += x_0.size(0)
 
-        if (batch_idx) % 10 == 0:
+        if (batch_idx) % 8 == 0:
             print(f"Batch: {batch_idx}/{len(train_loader)} | Loss: {loss.item():.5f}")
 
         wandb.log({"batch_loss": loss.item(), "batch_idx": batch_idx})
@@ -132,7 +132,10 @@ for epoch in range(EPOCHS):
     print(f"Epoch: {epoch+1}/{EPOCHS} | Loss: {epoch_train_loss:.5f}")
     print("-" * 60)
 
-    if (epoch+1) % 50 == 0:
+    if epoch == 0:
+        img_grid = make_grid(fixed_noise, 4).to(torch.device('cpu'))
+        wandb.log({"epoch_loss": epoch_train_loss, "epoch": epoch, "validation_samples": wandb.Image(img_grid, caption=f'Sampled at epoch: {epoch+1}')})
+    elif (epoch+1) % 50 == 0:
         save_model_checkpoint(f"./outputs/model_epoch_{epoch+1}.pt", epoch, model, ema_model, optimizer, losses)
         # sampling logic
         ema_model.eval()

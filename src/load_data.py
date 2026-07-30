@@ -5,6 +5,7 @@ from torchvision.io import decode_image
 
 class TransistorDataset(Dataset):
     def __init__(self, img_dir, transform=None):
+        super().__init__()
         self.img_dir = Path(img_dir)
         self.transform = transform
 
