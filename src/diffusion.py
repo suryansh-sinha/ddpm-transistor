@@ -25,12 +25,15 @@ class LinearNoiseScheduler:
         # the direct formula to get x_t from x_0
         return x_t
     
-    def sampling(self, unet: torch.nn.Module, x_t: torch.Tensor):
+    def sampling(self, unet: torch.nn.Module, x_t: torch.Tensor, starting_step = None):
         
         unet.eval()
         batch_size, img_channels, img_size = x_t.shape[0], x_t.shape[1], x_t.shape[2]
+
+        if starting_step is None:
+            starting_step = self.num_timesteps
         
-        for t in range(self.num_timesteps-1, -1, -1):
+        for t in range(starting_step-1, -1, -1):
 
             if (t+1)%100 == 0:
                 print(f"Working on timestep: {t+1}/{self.num_timesteps}")
