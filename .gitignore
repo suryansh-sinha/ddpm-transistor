@@ -12,6 +12,9 @@ __pycache__/
 
 # -- Data and Large Datasets --
 data/
+eval_outputs/
+outputs/
+wandb/
 
 # -- ML Training Outputs & Weights --
 *.pt
@@ -24,6 +27,4 @@ data/
 .DS_Store
 src/test.py
 test-notebook.ipynb
-
-wandb
 DEVLOG.md

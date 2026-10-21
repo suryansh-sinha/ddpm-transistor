@@ -1,12 +1,14 @@
 from pathlib import Path
+
 import matplotlib.pyplot as plt
 import torch
 import torchvision
-from torchvision.transforms import v2
 from torchmetrics.image import StructuralSimilarityIndexMeasure
+from torchvision.transforms import v2
+
+from src.diffusion import LinearNoiseScheduler
 from src.unet import UNet
 from src.utils import load_checkpoint
-from src.diffusion import LinearNoiseScheduler
 
 NOISE_STEPS = 300
 NUM_TIMESTEPS = 1000
@@ -20,25 +22,42 @@ SINUSOIDAL_TIME_EMB_DIM = 128
 EMB_DIM = 256
 N_HEADS = 4
 NUM_GROUPS = 32
-DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+DEVICE = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
 
 lns = LinearNoiseScheduler(NUM_TIMESTEPS, BETA_START, BETA_END, DEVICE)
 
 # loading checkpoint data
-epoch, model_weights, ema_model_weights, optimizer_state, loss_hist = load_checkpoint("./outputs/model_epoch_3650.pt")
+epoch, model_weights, ema_model_weights, optimizer_state, loss_hist = load_checkpoint(
+    "./outputs/model_epoch_3650.pt"
+)
 
 # loading model
-unet = UNet(IN_CHANNELS, BASE_CHANNELS, SINUSOIDAL_TIME_EMB_DIM,
-            EMB_DIM, N_HEADS, NUM_GROUPS, DEPTH).to(DEVICE)
+unet = UNet(
+    IN_CHANNELS,
+    BASE_CHANNELS,
+    SINUSOIDAL_TIME_EMB_DIM,
+    EMB_DIM,
+    N_HEADS,
+    NUM_GROUPS,
+    DEPTH,
+).to(DEVICE)
 ema_model = torch.optim.swa_utils.AveragedModel(
-    unet,
-    multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.9999)
+    unet, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.9999)
 )
 
 ema_model.load_state_dict(ema_model_weights)
 ema_model.eval()
 
-ssim_metric = StructuralSimilarityIndexMeasure(data_range=(-1.0, 1.0), return_full_image=True).to(DEVICE)
+ssim_metric = StructuralSimilarityIndexMeasure(
+    data_range=(-1.0, 1.0), return_full_image=True
+).to(DEVICE)
+
 
 def load_image(img_dir, IMG_SIZE=IMG_SIZE):
     r"""
@@ -52,20 +71,26 @@ def load_image(img_dir, IMG_SIZE=IMG_SIZE):
     image = torchvision.io.decode_image(str(img_list[idx]))
     image = image.float() / 255.0
 
-    transform = v2.Compose([
-        v2.Resize((IMG_SIZE, IMG_SIZE)),
-        v2.Lambda(lambda x: x*2 - 1)
-    ])
+    transform = v2.Compose(
+        [v2.Resize((IMG_SIZE, IMG_SIZE)), v2.Lambda(lambda x: x * 2 - 1)]
+    )
     image = transform(torch.unsqueeze(image, dim=0))
 
     return image
+
 
 def calculate_ssim(x_0):
 
     with torch.inference_mode():
         x_0 = x_0.to(DEVICE)
         noise = torch.randn_like(x_0).to(DEVICE)
-        t = torch.tensor([NOISE_STEPS,], dtype=torch.int64, device=DEVICE)
+        t = torch.tensor(
+            [
+                NOISE_STEPS,
+            ],
+            dtype=torch.int64,
+            device=DEVICE,
+        )
 
         # Adding noise till NOISE_STEPS steps -
         x_t = lns.add_noise(x_0, noise, t)
@@ -78,10 +103,15 @@ def calculate_ssim(x_0):
         # Calculating SSIM Score -
         score, sim_map = ssim_metric(denoised_img, x_0)
 
-        anomaly_map = 1 - sim_map   # 1 - similarity gives heatmap for defectiveness (high values mean not similar)
-        anomaly_map = torch.mean(anomaly_map, dim=1, keepdim=True)  # mean along rgb to convert to single channel
+        anomaly_map = (
+            1 - sim_map
+        )  # 1 - similarity gives heatmap for defectiveness (high values mean not similar)
+        anomaly_map = torch.mean(
+            anomaly_map, dim=1, keepdim=True
+        )  # mean along rgb to convert to single channel
 
     return x_0, x_t, denoised_img, anomaly_map, score.item()
+
 
 def tensor_to_pil(tensor):
     if tensor.ndim == 4:
@@ -89,8 +119,8 @@ def tensor_to_pil(tensor):
 
     # move to CPU, detach, change back to [0, 1]
     tensor = tensor.detach().cpu()
-    tensor = (tensor + 1.) / 2.
-    tensor = torch.clamp(tensor, 0., 1.)
+    tensor = (tensor + 1.0) / 2.0
+    tensor = torch.clamp(tensor, 0.0, 1.0)
 
     # convert from [C, H, W] to [H, W, C]
     if tensor.shape[0] == 1:
@@ -99,6 +129,7 @@ def tensor_to_pil(tensor):
         img_np = tensor.permute(1, 2, 0).numpy()
 
     return img_np
+
 
 def visualize_results(x_0, x_t, denoised_img, anomaly_map, score):
     img_x0 = tensor_to_pil(x_0)
@@ -127,7 +158,8 @@ def visualize_results(x_0, x_t, denoised_img, anomaly_map, score):
     fig.suptitle(f"SSIM Score: {score:.5f}", fontsize=14)
     plt.show()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     x_0 = load_image("./data/transistor/test/damaged_case/")
     x_0, x_t, denoised_img, anomaly_map, score = calculate_ssim(x_0)
     visualize_results(x_0, x_t, denoised_img, anomaly_map, score)
