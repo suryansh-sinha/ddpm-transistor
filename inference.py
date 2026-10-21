@@ -1,13 +1,12 @@
+from pathlib import Path
+import matplotlib.pyplot as plt
 import torch
 import torchvision
 from torchvision.transforms import v2
-from pathlib import Path
-from src.diffusion import LinearNoiseScheduler
+from torchmetrics.image import StructuralSimilarityIndexMeasure
 from src.unet import UNet
 from src.utils import load_checkpoint
-from torchmetrics.image import StructuralSimilarityIndexMeasure
-import matplotlib.pyplot as plt
-import numpy as np
+from src.diffusion import LinearNoiseScheduler
 
 NOISE_STEPS = 300
 NUM_TIMESTEPS = 1000
@@ -32,7 +31,7 @@ epoch, model_weights, ema_model_weights, optimizer_state, loss_hist = load_check
 unet = UNet(IN_CHANNELS, BASE_CHANNELS, SINUSOIDAL_TIME_EMB_DIM,
             EMB_DIM, N_HEADS, NUM_GROUPS, DEPTH).to(DEVICE)
 ema_model = torch.optim.swa_utils.AveragedModel(
-    unet, 
+    unet,
     multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.9999)
 )
 
@@ -129,6 +128,6 @@ def visualize_results(x_0, x_t, denoised_img, anomaly_map, score):
     plt.show()
 
 if __name__=="__main__":
-    x_0 = load_image("./data/transistor/good/")
+    x_0 = load_image("./data/transistor/test/damaged_case/")
     x_0, x_t, denoised_img, anomaly_map, score = calculate_ssim(x_0)
     visualize_results(x_0, x_t, denoised_img, anomaly_map, score)

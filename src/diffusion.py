@@ -24,15 +24,15 @@ class LinearNoiseScheduler:
 
         # the direct formula to get x_t from x_0
         return x_t
-    
+
     def sampling(self, unet: torch.nn.Module, x_t: torch.Tensor, starting_step = None):
-        
+
         unet.eval()
         batch_size, img_channels, img_size = x_t.shape[0], x_t.shape[1], x_t.shape[2]
 
         if starting_step is None:
             starting_step = self.num_timesteps
-        
+
         for t in range(starting_step-1, -1, -1):
 
             if (t+1)%100 == 0:
@@ -45,7 +45,7 @@ class LinearNoiseScheduler:
             sigma_1 = torch.sqrt(self.betas[T]).to(self.device) # fixed large variance (choice 1 in paper)
             # sigma_2 = (self.sqrt_one_minus_alpha_bars[T-1]/self.sqrt_one_minus_alpha_bars[T]) * torch.sqrt(self.betas[T])   # tighter posterior variance (choice 2)
 
-            noise = sigma_1.reshape(-1, 1, 1, 1) * torch.randn((batch_size, img_channels, img_size, img_size), device=self.device)
+            noise = sigma_1.reshape(-1, 1, 1, 1) * torch.randn(size=(batch_size, img_channels, img_size, img_size), device=self.device)
 
             with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
                 unet_pred_noise = unet(x_t, T)
@@ -65,4 +65,4 @@ class LinearNoiseScheduler:
 
             x_t = mean + noise  # x_t-1 = posterior mean (depends on estimated x0, xt) + variance * noise from normal dist
 
-        return x_t
+        return x_t  # (B, C, H, W)

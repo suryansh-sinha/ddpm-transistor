@@ -14,7 +14,7 @@ class TransistorDataset(Dataset):
 
     def __len__(self):
         return len(self.img_list)
-    
+
     def __getitem__(self, idx):
         image = decode_image(str(self.img_list[idx])).float() / 255.0   # Potential issue -> loads uint8 tensor. Might need to convert to torch.float32
         if self.transform:
