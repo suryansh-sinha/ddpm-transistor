@@ -24,7 +24,7 @@ Everything below was written from scratch (no diffusion or U-Net libraries):
 
 Eight samples generated from random noise (seed 42), each shown next to its nearest training image and the absolute difference:
 
-![Generated samples and nearest training neighbors](assets/generation_and_nn_check.png)
+![Generated samples and nearest training neighbors](./assets/generation_and_nn_check.png)
 
 **Memorization check.** Nearest neighbors were searched in pixel space (L2) over all 213 training images plus their horizontal flips (426 reference images). As a baseline, the same distance was computed for the 60 held-out good test images.
 

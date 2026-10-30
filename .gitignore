@@ -23,8 +23,6 @@ wandb/
 
 # -- IDEs and System Files --
 .vscode/
-.continue
 .DS_Store
-src/test.py
 test-notebook.ipynb
 DEVLOG.md
