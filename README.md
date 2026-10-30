@@ -2,7 +2,7 @@
 
 A from-scratch PyTorch implementation of Denoising Diffusion Probabilistic Models (Ho et al., 2020), trained on the MVTec AD `transistor` class. The project covers unconditional image generation and an evaluation of whether the same model can be used for unsupervised defect detection by noising an image, denoising it, and comparing the result to the input.
 
-Training curves and sample grids were tracked with Weights & Biases: [W&B report](<WANDB_REPORT_URL>).
+Training curves and sample grids were tracked with Weights & Biases.
 
 ## Summary of results
 
