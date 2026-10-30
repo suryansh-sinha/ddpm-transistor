@@ -16,7 +16,7 @@ class LinearNoiseScheduler:
         self.sqrt_one_minus_alpha_bars = torch.sqrt(1.0 - self.alpha_bars).to(device)
 
     def add_noise(self, x_0: torch.Tensor, noise: torch.Tensor, t: torch.Tensor):
-        # sqrt_alpha_bars[t] has shape [batch_size] and we need to multiply it with [batch_size, 3, 1024, 1024] image.
+        # sqrt_alpha_bars[t] has shape [batch_size] and we need to multiply it with [batch_size, 3, 256, 256] image.
         # for broadcasting to work correctly, we are adding dimensions to make it [batch_size, 1, 1, 1]
 
         batch_size = x_0.shape[0]

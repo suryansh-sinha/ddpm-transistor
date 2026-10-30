@@ -144,7 +144,7 @@ def main():
     print("Saved image_auroc_vs_t.png")
 
     # Plot: Qualitative Samples
-    # Explicitly use README_NOISE_STEP (200) for the qualitative
+    # Explicitly use README_NOISE_STEP (75) for the qualitative
     # figure instead of the best-scoring t. This is because I specifically saved
     # the denoised reconstructions for t=75 in evaluate_ssim.py, to show exactly what
     # the model "fixed" (Original -> Denoised -> Anomaly Map).
