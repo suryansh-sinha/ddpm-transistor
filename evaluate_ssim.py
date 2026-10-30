@@ -13,8 +13,8 @@ from src.unet import UNet
 from src.utils import load_checkpoint
 
 ## Hyperparameters and Setup
-NOISE_STEPS_TO_EVAL = [100, 200, 300, 400]  # Sweep across a few noise levels
-README_NOISE_STEP = 300  # Save denoised images ONLY for this step
+NOISE_STEPS_TO_EVAL = [25, 50, 75, 100, 200, 300, 400]  # Sweep across a few noise levels
+README_NOISE_STEP = 75  # Save denoised images ONLY for this step
 BATCH_SIZE = 4
 IMG_SIZE = 256
 NUM_TIMESTEPS = 1000
@@ -176,8 +176,6 @@ for batch in dataloader:
                 "label": labels[i].item(),
                 "defect_type": defect_types[i],
                 "ssim_score": per_image_ssim_cpu[i].item(),
-                # Anomaly: HIGHER = more defective. Use THIS for AUROC.
-                "anomaly_score": 1.0 - per_image_ssim_cpu[i].item(),
                 "map_path": str(map_path),
                 "mask_path": str(mask_path),  # Save mask path for scoring script
             }
